@@ -1,0 +1,38 @@
+[
+  {
+    "lowerThreshold": 0,
+    "upperThreshold": 18.4,
+    "category": "Underweight",
+    "healthRisk": "Malnutrition risk"
+  },
+  {
+    "lowerThreshold": 18.5,
+    "upperThreshold": 24.9,
+    "category": "Normal weight",
+    "healthRisk": "Low risk"
+  },
+  {
+    "lowerThreshold": 25,
+    "upperThreshold": 29.9,
+    "category": "Overweight",
+    "healthRisk": "Enhanced risk"
+  },
+  {
+    "lowerThreshold": 30,
+    "upperThreshold": 34.9,
+    "category": "Moderately obese",
+    "healthRisk": "Medium risk"
+  },
+  {
+    "lowerThreshold": 35,
+    "upperThreshold": 39.9,
+    "category": "Severely obese",
+    "healthRisk": "High risk"
+  },
+  {
+    "lowerThreshold": 40,
+    "upperThreshold": 9999,
+    "category": "Very severely obese",
+    "healthRisk": "Very high risk"
+  }
+]
