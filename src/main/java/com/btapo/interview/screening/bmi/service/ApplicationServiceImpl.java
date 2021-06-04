@@ -76,16 +76,22 @@ public class ApplicationServiceImpl implements ApplicationService {
     @Override
     public BmiJobEntity uploadFile(MultipartFile file) throws IOException {
         String id = UUID.randomUUID().toString();
-        File tmpFile = File.createTempFile(file.getName(), "json");
+        File tmpFile = File.createTempFile(extractFileName(file, id), ".json");
         saveFile(file, tmpFile.getAbsolutePath());
         return createJob(id, tmpFile);
+    }
+
+    private String extractFileName(MultipartFile file, String defaultName) {
+        return file.getOriginalFilename() != null ?
+                file.getOriginalFilename().substring(0, file.getOriginalFilename().indexOf(".json"))
+                : defaultName;
     }
 
     private BmiJobEntity createJob(String id, File tmpFile) {
         BmiJobEntity entity = new BmiJobEntity(id);
         entity.setInputFileName(tmpFile.getName());
-        startJob(entity, tmpFile);
         bmiJobRepository.save(entity);
+        startJob(entity, tmpFile);
         return entity;
     }
 
@@ -125,12 +131,19 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
         BmiJobEntity entity = jobEntity.get();
         entity.setCompleted(completed);
-        entity.setNoOfRecordsProcessed(noOfRecordsProcessed);
-        entity.setNoOfRecordsProcessedWithError(noOfRecordsWithError);
+        if (completed) {
+            entity.setJobCompletedAt(new Date());
+        }
+        if (noOfRecordsProcessed != null) {
+            entity.setNoOfRecordsProcessed(noOfRecordsProcessed);
+        }
+        if (noOfRecordsWithError != null) {
+            entity.setNoOfRecordsProcessedWithError(noOfRecordsWithError);
+        }
         if (entity.getJobStartedAt() == null) {
             entity.setJobStartedAt(new Date());
         }
-        if (entity.getSuccessful() != null) {
+        if (successful != null) {
             entity.setSuccessful(successful);
         }
         bmiJobRepository.save(entity);
@@ -139,7 +152,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     @Override
     public BmiConfig getBmiConfig(Double bmi) {
         for (BmiConfig config : bmiConfigs) {
-            if (config.getLowerThreshold() >= bmi && config.getUpperThreshold() <= bmi) {
+            if (bmi >= config.getLowerThreshold() && bmi <= config.getUpperThreshold()) {
                 return config;
             }
         }

@@ -1,6 +1,7 @@
 package com.btapo.interview.screening.bmi.controller;
 
 import com.btapo.interview.screening.bmi.entity.BmiJobEntity;
+import com.btapo.interview.screening.bmi.exception.RecordNotFoundException;
 import com.btapo.interview.screening.bmi.service.ApplicationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +42,8 @@ public class ApplicationController {
     public BmiJobEntity getJobStatus(@PathVariable("job-id") String jobId) {
         try {
             return applicationService.getJobStatus(jobId);
+        } catch (RecordNotFoundException e) {
+            throw e;
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
@@ -50,6 +53,8 @@ public class ApplicationController {
     public void downloadJobArtifacts(@PathVariable("job-id") String jobId) {
         try {
             File file = applicationService.getJobArtifacts(jobId);
+        } catch (RecordNotFoundException e) {
+            throw e;
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }

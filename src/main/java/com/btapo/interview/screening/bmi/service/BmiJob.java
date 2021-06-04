@@ -29,8 +29,8 @@ public class BmiJob implements Runnable {
     public void run() {
         try {
             service.updateJobStatus(jobId, null, null, false, null);
-            File outFile = File.createTempFile(System.currentTimeMillis() + "-out-" + "-" + jobId, ".json");
-            File summaryFile = File.createTempFile(System.currentTimeMillis() + "-summary-" + "-" + jobId, ".json");
+            File outFile = File.createTempFile(System.currentTimeMillis() + "-out-" + jobId, ".json");
+            File summaryFile = File.createTempFile(System.currentTimeMillis() + "-summary-" + jobId, ".json");
             process(input.getAbsolutePath(), outFile.getAbsolutePath(), summaryFile.getAbsolutePath());
         } catch (IOException e) {
             log.error("Failed to process for job : {}", jobId);
@@ -77,9 +77,9 @@ public class BmiJob implements Runnable {
             }
             writer.endArray();
             reader.endArray();
-            service.updateJobStatus(jobId, noOfRecordsProcessed, noOfRecordsWithError, false, true);
+            service.updateJobStatus(jobId, noOfRecordsProcessed, noOfRecordsWithError, true, true);
         } catch (Exception e) {
-            service.updateJobStatus(jobId, noOfRecordsProcessed, noOfRecordsWithError, false, false);
+            service.updateJobStatus(jobId, noOfRecordsProcessed, noOfRecordsWithError, true, false);
         }
     }
 
