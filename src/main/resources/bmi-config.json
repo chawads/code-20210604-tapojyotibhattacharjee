@@ -7,25 +7,25 @@
   },
   {
     "lowerThreshold": 18.5,
-    "upperThreshold": 24.9,
+    "upperThreshold": 25,
     "category": "Normal weight",
     "healthRisk": "Low risk"
   },
   {
     "lowerThreshold": 25,
-    "upperThreshold": 29.9,
+    "upperThreshold": 30,
     "category": "Overweight",
     "healthRisk": "Enhanced risk"
   },
   {
     "lowerThreshold": 30,
-    "upperThreshold": 34.9,
+    "upperThreshold": 35,
     "category": "Moderately obese",
     "healthRisk": "Medium risk"
   },
   {
     "lowerThreshold": 35,
-    "upperThreshold": 39.9,
+    "upperThreshold": 40,
     "category": "Severely obese",
     "healthRisk": "High risk"
   },

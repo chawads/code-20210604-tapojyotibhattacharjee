@@ -27,11 +27,9 @@ public class ApplicationServiceImpl implements ApplicationService {
     private static final Collection<BmiConfig> bmiConfigs = new ArrayList<>();
     private static ExecutorService executorService;
     private final BmiJobRepository bmiJobRepository;
-    private final int maxThreads;
 
     public ApplicationServiceImpl(@Value("${bmi.job.max-threads}") int maxThreads, BmiJobRepository bmiJobRepository) throws IOException {
         this.bmiJobRepository = bmiJobRepository;
-        this.maxThreads = maxThreads;
         loadBmiConfig();
         initExecutorService(maxThreads);
     }
@@ -183,7 +181,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     @Override
     public BmiConfig getBmiConfig(Double bmi) {
         for (BmiConfig config : bmiConfigs) {
-            if (bmi >= config.getLowerThreshold() && bmi <= config.getUpperThreshold()) {
+            if (bmi >= config.getLowerThreshold() && bmi < config.getUpperThreshold()) {
                 return config;
             }
         }
@@ -194,7 +192,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     public Double calculateBmi(double massInKg, double heightInCm) {
         try {
             double heightInMetres = heightInCm / 100d;
-            return massInKg / heightInMetres;
+            return massInKg / (heightInMetres * heightInMetres);
         } catch (Exception e) {
             return null;
         }
