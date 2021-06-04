@@ -9,6 +9,7 @@ import com.google.gson.stream.JsonReader;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,15 +24,22 @@ import java.util.zip.ZipOutputStream;
 @Slf4j
 public class ApplicationServiceImpl implements ApplicationService {
 
-    private static final ExecutorService executorService = Executors.newFixedThreadPool(10);
-
     private static final Collection<BmiConfig> bmiConfigs = new ArrayList<>();
-
+    private static ExecutorService executorService;
     private final BmiJobRepository bmiJobRepository;
+    private final int maxThreads;
 
-    public ApplicationServiceImpl(BmiJobRepository bmiJobRepository) throws IOException {
+    public ApplicationServiceImpl(@Value("${bmi.job.max-threads}") int maxThreads, BmiJobRepository bmiJobRepository) throws IOException {
         this.bmiJobRepository = bmiJobRepository;
+        this.maxThreads = maxThreads;
         loadBmiConfig();
+        initExecutorService(maxThreads);
+    }
+
+    private static synchronized void initExecutorService(int maxThreads) {
+        if (executorService == null) {
+            executorService = Executors.newFixedThreadPool(maxThreads);
+        }
     }
 
     private static synchronized void loadBmiConfig() throws IOException {
@@ -71,15 +79,15 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
     }
 
-    private static void compressDirectoryToZipfile(String rootDir, String sourceDir, ZipOutputStream out) throws IOException {
-        for (File file : new File(sourceDir).listFiles()) {
+    private static void compressDirectoryToZipFile(String rootDir, String sourceDir, ZipOutputStream out) throws IOException {
+        for (File file : Objects.requireNonNull(new File(sourceDir).listFiles())) {
             if (file.isDirectory()) {
-                compressDirectoryToZipfile(rootDir, sourceDir + File.separator + file.getName(), out);
+                compressDirectoryToZipFile(rootDir, sourceDir + File.separator + file.getName(), out);
             } else {
                 ZipEntry entry = new ZipEntry(sourceDir.replace(rootDir, "") + file.getName());
                 out.putNextEntry(entry);
 
-                FileInputStream in = new FileInputStream(sourceDir + file.getName());
+                FileInputStream in = new FileInputStream(sourceDir + File.separator + file.getName());
                 IOUtils.copy(in, out);
                 IOUtils.closeQuietly(in);
             }
@@ -120,7 +128,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     private String getDataOutDirectory(String id) {
-        return System.getProperty("user.dir") + File.separator + "data" + File.separator + "out" + id;
+        return System.getProperty("user.dir") + File.separator + "data" + File.separator + "out" + File.separator + id;
     }
 
     @Override
@@ -195,7 +203,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     @Override
     public void compressZipFile(String sourceDir, String outputFile) throws IOException {
         ZipOutputStream zipFile = new ZipOutputStream(new FileOutputStream(outputFile));
-        compressDirectoryToZipfile(sourceDir, sourceDir, zipFile);
+        compressDirectoryToZipFile(sourceDir, sourceDir, zipFile);
         IOUtils.closeQuietly(zipFile);
     }
 }

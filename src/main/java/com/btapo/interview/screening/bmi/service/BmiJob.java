@@ -39,8 +39,8 @@ public class BmiJob implements Runnable {
             if (process(input.getAbsolutePath(), outFile.getAbsolutePath(), summaryFile.getAbsolutePath())) {
                 Files.move(Paths.get(outFile.getAbsolutePath()), Paths.get(outputDir + File.separator + outFile.getName()),
                         StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-                Files.move(Paths.get(summaryFile.getAbsolutePath()), Paths.get(outputDir + File.separator + summaryFile.getName()),
-                        StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+//                Files.move(Paths.get(summaryFile.getAbsolutePath()), Paths.get(outputDir + File.separator + summaryFile.getName()),
+//                        StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
                 service.compressZipFile(outputDir, outputDir + ".zip");
             }
         } catch (IOException e) {
