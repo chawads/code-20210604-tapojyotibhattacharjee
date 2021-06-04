@@ -22,7 +22,6 @@ public class BMICalcTests {
     public void verifyBMICalculationMethod_match_1() {
         DecimalFormat df = new DecimalFormat("0.0");
         assert df.format(applicationService.calculateBmi(65, 180)).equals(df.format(20.1));
-        assert !df.format(applicationService.calculateBmi(65, 180)).equals(df.format(31.1));
     }
 
     @Test
@@ -30,6 +29,13 @@ public class BMICalcTests {
     public void verifyBMICalculationMethod_match_2() {
         DecimalFormat df = new DecimalFormat("0.0");
         assert df.format(applicationService.calculateBmi(80, 174)).equals(df.format(26.4));
+    }
+
+    @Test
+    @DisplayName("BMI should be 24.49 as mentioned in the requirement doc")
+    public void verifyBMICalculationMethod_match_3() {
+        DecimalFormat df = new DecimalFormat("0.00");
+        assert df.format(applicationService.calculateBmi(75, 175)).equals(df.format(24.49));
     }
 
     @Test
