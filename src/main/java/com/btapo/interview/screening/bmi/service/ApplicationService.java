@@ -4,11 +4,12 @@ import com.btapo.interview.screening.bmi.entity.BmiJobEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.IOException;
 
 public interface ApplicationService {
     Double calculateBmi(double massInKg, double heightInCm);
 
-    BmiJobEntity upload(MultipartFile file);
+    BmiJobEntity linkFile(String absoluteFilePath);
 
     BmiJobEntity getJobStatus(String jobId);
 
@@ -18,4 +19,6 @@ public interface ApplicationService {
                          Boolean successful);
 
     BmiConfig getBmiConfig(Double bmi);
+
+    BmiJobEntity uploadFile(MultipartFile file) throws IOException;
 }

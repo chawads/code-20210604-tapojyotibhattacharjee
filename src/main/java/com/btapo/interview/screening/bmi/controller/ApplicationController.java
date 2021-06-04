@@ -19,10 +19,19 @@ public class ApplicationController {
     @Autowired
     private ApplicationService applicationService;
 
-    @PostMapping("/upload")
+    @PostMapping("/job-submit-by-file-link")
+    public BmiJobEntity upload(@RequestParam("absoluteFilePath") String absoluteFilePath) {
+        try {
+            return applicationService.linkFile(absoluteFilePath);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+    }
+
+    @PostMapping("/job-submit-by-file-upload")
     public BmiJobEntity upload(@RequestParam("file") MultipartFile file) {
         try {
-            return applicationService.upload(file);
+            return applicationService.uploadFile(file);
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }

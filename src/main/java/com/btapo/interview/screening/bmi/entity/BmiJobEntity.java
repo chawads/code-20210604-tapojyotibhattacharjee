@@ -1,6 +1,5 @@
 package com.btapo.interview.screening.bmi.entity;
 
-import com.sun.istack.internal.NotNull;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
@@ -14,9 +13,9 @@ import java.util.Date;
 @Entity
 @Table(name = "bmi_job")
 public class BmiJobEntity {
-    @NotNull
     @Id
     private String id;
+    private String inputFileName;
     private Boolean completed;
     private Boolean successful;
     @Temporal(TemporalType.TIMESTAMP)
