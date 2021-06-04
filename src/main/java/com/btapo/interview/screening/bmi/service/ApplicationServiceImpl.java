@@ -7,6 +7,8 @@ import com.btapo.interview.screening.bmi.repository.BmiJobRepository;
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -14,6 +16,8 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Service
 @Slf4j
@@ -67,10 +71,25 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
     }
 
+    private static void compressDirectoryToZipfile(String rootDir, String sourceDir, ZipOutputStream out) throws IOException {
+        for (File file : new File(sourceDir).listFiles()) {
+            if (file.isDirectory()) {
+                compressDirectoryToZipfile(rootDir, sourceDir + File.separator + file.getName(), out);
+            } else {
+                ZipEntry entry = new ZipEntry(sourceDir.replace(rootDir, "") + file.getName());
+                out.putNextEntry(entry);
+
+                FileInputStream in = new FileInputStream(sourceDir + file.getName());
+                IOUtils.copy(in, out);
+                IOUtils.closeQuietly(in);
+            }
+        }
+    }
+
     @Override
     public BmiJobEntity linkFile(String file) {
         String id = UUID.randomUUID().toString();
-        return createJob(id, new File(file));
+        return createJob(id, new File(file).getName(), new File(file), false);
     }
 
     @Override
@@ -78,7 +97,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         String id = UUID.randomUUID().toString();
         File tmpFile = File.createTempFile(extractFileName(file, id), ".json");
         saveFile(file, tmpFile.getAbsolutePath());
-        return createJob(id, tmpFile);
+        return createJob(id, file.getOriginalFilename(), tmpFile, true);
     }
 
     private String extractFileName(MultipartFile file, String defaultName) {
@@ -87,21 +106,21 @@ public class ApplicationServiceImpl implements ApplicationService {
                 : defaultName;
     }
 
-    private BmiJobEntity createJob(String id, File tmpFile) {
+    private BmiJobEntity createJob(String id, String inputFilename, File tmpFile, boolean deleteInputAfterProcess) {
         BmiJobEntity entity = new BmiJobEntity(id);
-        entity.setInputFileName(tmpFile.getName());
+        entity.setInputFileName(inputFilename);
         bmiJobRepository.save(entity);
-        startJob(entity, tmpFile);
+        startJob(entity, tmpFile, deleteInputAfterProcess);
         return entity;
     }
 
-    private void startJob(BmiJobEntity entity, File tmpFile) {
+    private void startJob(BmiJobEntity entity, File tmpFile, boolean deleteInputAfterProcess) {
         String outDir = getDataOutDirectory(entity.getId());
-        executorService.submit(new BmiJob(this, entity.getId(), tmpFile, outDir));
+        executorService.submit(new BmiJob(this, entity.getId(), tmpFile, outDir, deleteInputAfterProcess));
     }
 
     private String getDataOutDirectory(String id) {
-        return System.getProperty("user.dir") + File.separator + id;
+        return System.getProperty("user.dir") + File.separator + "data" + File.separator + "out" + id;
     }
 
     @Override
@@ -124,7 +143,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Override
     public void updateJobStatus(String jobId, Long noOfRecordsProcessed, Long noOfRecordsWithError, Boolean completed,
-                                Boolean successful) {
+                                Boolean successful, Exception e) {
         Optional<BmiJobEntity> jobEntity = bmiJobRepository.findById(jobId);
         if (!jobEntity.isPresent()) {
             throw new RecordNotFoundException("Job not found : " + jobId);
@@ -145,6 +164,10 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
         if (successful != null) {
             entity.setSuccessful(successful);
+        }
+        if (e != null) {
+            entity.setErrorMessage(e.getMessage());
+            entity.setErrorStackTrace(ExceptionUtils.getStackTrace(e));
         }
         bmiJobRepository.save(entity);
     }
@@ -167,5 +190,12 @@ public class ApplicationServiceImpl implements ApplicationService {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    @Override
+    public void compressZipFile(String sourceDir, String outputFile) throws IOException {
+        ZipOutputStream zipFile = new ZipOutputStream(new FileOutputStream(outputFile));
+        compressDirectoryToZipfile(sourceDir, sourceDir, zipFile);
+        IOUtils.closeQuietly(zipFile);
     }
 }

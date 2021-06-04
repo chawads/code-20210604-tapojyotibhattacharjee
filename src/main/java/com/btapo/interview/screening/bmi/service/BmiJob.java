@@ -8,37 +8,56 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.text.DecimalFormat;
 
 @Slf4j
 public class BmiJob implements Runnable {
 
     private final File input;
-    private final String outputReportZipName;
+    private final String outputDir;
     private final ApplicationService service;
     private final String jobId;
+    private final boolean deleteInputAfterProcess;
 
-    public BmiJob(ApplicationService service, String jobId, File input, String outputReportZipName) {
+    public BmiJob(ApplicationService service, String jobId, File input, String outputDir,
+                  boolean deleteInputAfterProcess) {
         this.service = service;
         this.jobId = jobId;
         this.input = input;
-        this.outputReportZipName = outputReportZipName;
+        this.outputDir = outputDir;
+        this.deleteInputAfterProcess = deleteInputAfterProcess;
     }
 
     @Override
     public void run() {
         try {
-            service.updateJobStatus(jobId, null, null, false, null);
+            service.updateJobStatus(jobId, null, null, false, null, null);
             File outFile = File.createTempFile(System.currentTimeMillis() + "-out-" + jobId, ".json");
             File summaryFile = File.createTempFile(System.currentTimeMillis() + "-summary-" + jobId, ".json");
-            process(input.getAbsolutePath(), outFile.getAbsolutePath(), summaryFile.getAbsolutePath());
+            Files.createDirectories(Paths.get(outputDir));
+            if (process(input.getAbsolutePath(), outFile.getAbsolutePath(), summaryFile.getAbsolutePath())) {
+                Files.move(Paths.get(outFile.getAbsolutePath()), Paths.get(outputDir + File.separator + outFile.getName()),
+                        StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+                Files.move(Paths.get(summaryFile.getAbsolutePath()), Paths.get(outputDir + File.separator + summaryFile.getName()),
+                        StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+                service.compressZipFile(outputDir, outputDir + ".zip");
+            }
         } catch (IOException e) {
-            log.error("Failed to process for job : {}", jobId);
-            service.updateJobStatus(jobId, null, null, true, false);
+            log.error("Failed to process for job : {}", jobId, e);
+            service.updateJobStatus(jobId, null, null, true, false, e);
+        } finally {
+            if (deleteInputAfterProcess) {
+                if (input.delete()) {
+                    log.info("Successfully deleted input file : {}", input);
+                } else {
+                    log.info("Failed to delete input file : {}", input);
+                }
+            }
         }
     }
 
-    private void process(String inPath, String outPath, String summaryPath) throws IOException {
+    private boolean process(String inPath, String outPath, String summaryPath) throws IOException {
         Long noOfRecordsProcessed = 0L;
         Long noOfRecordsWithError = 0L;
         int updateStatusEveryXRecords = 1_000;
@@ -72,14 +91,17 @@ public class BmiJob implements Runnable {
                 writer.endObject();
 
                 if (noOfRecordsProcessed % updateStatusEveryXRecords == 0) {
-                    service.updateJobStatus(jobId, noOfRecordsProcessed, noOfRecordsWithError, false, true);
+                    service.updateJobStatus(jobId, noOfRecordsProcessed, noOfRecordsWithError, false, true, null);
                 }
             }
             writer.endArray();
             reader.endArray();
-            service.updateJobStatus(jobId, noOfRecordsProcessed, noOfRecordsWithError, true, true);
+            service.updateJobStatus(jobId, noOfRecordsProcessed, noOfRecordsWithError, true, true, null);
+            return true;
         } catch (Exception e) {
-            service.updateJobStatus(jobId, noOfRecordsProcessed, noOfRecordsWithError, true, false);
+            log.error("File processing failed : {}", inPath);
+            service.updateJobStatus(jobId, noOfRecordsProcessed, noOfRecordsWithError, true, false, e);
+            return false;
         }
     }
 

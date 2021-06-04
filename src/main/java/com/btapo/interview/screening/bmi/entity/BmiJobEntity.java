@@ -29,7 +29,13 @@ public class BmiJobEntity {
     private Date jobLastUpdatedAt;
     private long noOfRecordsProcessed;
     private long noOfRecordsProcessedWithError;
-    private String reportSummary;
+    private String reportArtifactLocation;
+    @Column(columnDefinition="clob")
+    @Lob
+    private String errorMessage;
+    @Column(columnDefinition="clob")
+    @Lob
+    private String errorStackTrace;
 
     public BmiJobEntity(String jobId) {
         this.id = jobId;

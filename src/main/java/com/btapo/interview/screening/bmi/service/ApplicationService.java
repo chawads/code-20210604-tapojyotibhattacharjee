@@ -16,9 +16,11 @@ public interface ApplicationService {
     File getJobArtifacts(String jobId);
 
     void updateJobStatus(String jobId, Long noOfRecordsProcessed, Long noOfRecordsWithError, Boolean completed,
-                         Boolean successful);
+                         Boolean successful, Exception e);
 
     BmiConfig getBmiConfig(Double bmi);
 
     BmiJobEntity uploadFile(MultipartFile file) throws IOException;
+
+    void compressZipFile(String sourceDir, String outputFile) throws IOException;
 }
