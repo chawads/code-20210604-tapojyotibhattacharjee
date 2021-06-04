@@ -12,7 +12,7 @@ import java.nio.file.StandardCopyOption;
 import java.text.DecimalFormat;
 
 @Slf4j
-public class BmiJob implements Runnable {
+public class BmiCalculationJob implements Runnable {
 
     private final File input;
     private final String outputDir;
@@ -20,8 +20,8 @@ public class BmiJob implements Runnable {
     private final String jobId;
     private final boolean deleteInputAfterProcess;
 
-    public BmiJob(ApplicationService service, String jobId, File input, String outputDir,
-                  boolean deleteInputAfterProcess) {
+    public BmiCalculationJob(ApplicationService service, String jobId, File input, String outputDir,
+                             boolean deleteInputAfterProcess) {
         this.service = service;
         this.jobId = jobId;
         this.input = input;
@@ -33,8 +33,8 @@ public class BmiJob implements Runnable {
     public void run() {
         try {
             service.updateJobStatus(jobId, null, null, false, null, null);
-            File outFile = File.createTempFile(System.currentTimeMillis() + "-out-" + jobId, ".json");
-            File summaryFile = File.createTempFile(System.currentTimeMillis() + "-summary-" + jobId, ".json");
+            File outFile = File.createTempFile("out-"+System.currentTimeMillis(), ".json");
+            File summaryFile = File.createTempFile("summary-" + System.currentTimeMillis(), ".json");
             Files.createDirectories(Paths.get(outputDir));
             if (process(input.getAbsolutePath(), outFile.getAbsolutePath(), summaryFile.getAbsolutePath())) {
                 Files.move(Paths.get(outFile.getAbsolutePath()), Paths.get(outputDir + File.separator + outFile.getName()),

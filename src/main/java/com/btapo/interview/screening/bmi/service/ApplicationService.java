@@ -13,7 +13,7 @@ public interface ApplicationService {
 
     BmiJobEntity getJobStatus(String jobId);
 
-    File getJobArtifacts(String jobId);
+    File getJobArtifact(String jobId);
 
     void updateJobStatus(String jobId, Long noOfRecordsProcessed, Long noOfRecordsWithError, Boolean completed,
                          Boolean successful, Exception e);

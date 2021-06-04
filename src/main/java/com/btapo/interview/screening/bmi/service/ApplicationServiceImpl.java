@@ -114,15 +114,16 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     private BmiJobEntity createJob(String id, String inputFilename, File tmpFile, boolean deleteInputAfterProcess) {
         BmiJobEntity entity = new BmiJobEntity(id);
+        String outDir = getDataOutDirectory(entity.getId());
         entity.setInputFileName(inputFilename);
+        entity.setReportArtifactLocation(outDir + ".zip");
         bmiJobRepository.save(entity);
-        startJob(entity, tmpFile, deleteInputAfterProcess);
+        startJob(entity, tmpFile, outDir, deleteInputAfterProcess);
         return entity;
     }
 
-    private void startJob(BmiJobEntity entity, File tmpFile, boolean deleteInputAfterProcess) {
-        String outDir = getDataOutDirectory(entity.getId());
-        executorService.submit(new BmiJob(this, entity.getId(), tmpFile, outDir, deleteInputAfterProcess));
+    private void startJob(BmiJobEntity entity, File tmpFile, String outDir, boolean deleteInputAfterProcess) {
+        executorService.submit(new BmiCalculationJob(this, entity.getId(), tmpFile, outDir, deleteInputAfterProcess));
     }
 
     private String getDataOutDirectory(String id) {
@@ -139,12 +140,12 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public File getJobArtifacts(String jobId) {
+    public File getJobArtifact(String jobId) {
         Optional<BmiJobEntity> jobEntity = bmiJobRepository.findById(jobId);
-        if (!jobEntity.isPresent()) {
-            throw new RecordNotFoundException("Job not found : " + jobId);
+        if (!jobEntity.isPresent() || !jobEntity.get().getSuccessful()) {
+            throw new RecordNotFoundException("Artifact not found : " + jobId);
         }
-        return new File("");
+        return new File(jobEntity.get().getReportArtifactLocation());
     }
 
     @Override
