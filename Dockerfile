@@ -3,7 +3,8 @@ WORKDIR /app
 COPY pom.xml /app/pom.xml
 RUN mvn -B dependency:resolve dependency:resolve-plugins -T1.5C -Dmaven.repo.local=/tmp/m2
 COPY src /app/src
-RUN mvn -B -o -Dmaven.test.skip -Dmaven.repo.local=/tmp/m2 -T1.5C package
+RUN mvn test
+RUN mvn -B -o -Dmaven.repo.local=/tmp/m2 -T1.5C package
 
 FROM openjdk:8-jre-slim-buster
 WORKDIR /app
