@@ -5,7 +5,7 @@ RUN mvn -B dependency:resolve dependency:resolve-plugins -T1.5C -Dmaven.repo.loc
 COPY src /app/src
 COPY data/in /app/data/in
 RUN mvn test
-RUN mvn -B -o -Dmaven.repo.local=/tmp/m2 -T1.5C package
+RUN mvn -B -o -DskipTests -Dmaven.repo.local=/tmp/m2 -T1.5C clean install
 
 FROM openjdk:8-jre-slim-buster
 WORKDIR /app
