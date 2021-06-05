@@ -1,7 +1,7 @@
 [
   {
-    "lowerThreshold": 0,
-    "upperThreshold": 18.4,
+    "lowerThreshold": 1,
+    "upperThreshold": 18.5,
     "category": "Underweight",
     "healthRisk": "Malnutrition risk"
   },

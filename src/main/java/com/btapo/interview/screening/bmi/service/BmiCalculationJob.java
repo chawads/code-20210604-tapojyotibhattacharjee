@@ -1,15 +1,22 @@
 package com.btapo.interview.screening.bmi.service;
 
+import com.btapo.interview.screening.bmi.utils.InMemorySummaryEntity;
+import com.btapo.interview.screening.bmi.utils.InMemorySummaryUtility;
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.text.DecimalFormat;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import static com.btapo.interview.screening.bmi.utils.CompressionUtility.compressZipFile;
 
@@ -21,6 +28,7 @@ public class BmiCalculationJob implements Runnable {
     private final ApplicationService service;
     private final String jobId;
     private final boolean deleteInputAfterProcess;
+    private Set<String> summaryIds = new HashSet<>();
 
     public BmiCalculationJob(ApplicationService service, String jobId, File input, String outputDir,
                              boolean deleteInputAfterProcess) {
@@ -80,7 +88,7 @@ public class BmiCalculationJob implements Runnable {
                 noOfRecordsProcessed++;
                 BmiOutput bmiOutput = new BmiOutput(bmiInput.getGender(), bmiInput.getWeightKg(),
                         bmiInput.getHeightCm());
-                if (bmi == null) {
+                if (bmi == null || bmi < 1 || bmi >= 9999) {
                     noOfRecordsWithError++;
                 } else {
                     BmiConfig bmiConfig = service.getBmiConfig(bmi);
@@ -92,7 +100,7 @@ public class BmiCalculationJob implements Runnable {
                 writeOutput(bmiOutput, writer);
                 writer.endObject();
 
-
+                addSummary(bmiOutput);
 
                 if (noOfRecordsProcessed % updateStatusEveryXRecords == 0) {
                     service.updateJobStatus(jobId, noOfRecordsProcessed, noOfRecordsWithError, false, true, null);
@@ -100,6 +108,7 @@ public class BmiCalculationJob implements Runnable {
             }
             writer.endArray();
             reader.endArray();
+            writeSummary(summaryPath);
             service.updateJobStatus(jobId, noOfRecordsProcessed, noOfRecordsWithError, true, true, null);
             return true;
         } catch (Exception e) {
@@ -107,6 +116,75 @@ public class BmiCalculationJob implements Runnable {
             service.updateJobStatus(jobId, noOfRecordsProcessed, noOfRecordsWithError, true, false, e);
             return false;
         }
+    }
+
+    private void writeSummary(String summaryPath) throws IOException {
+        BmiCalculationSummary calculationSummary = new BmiCalculationSummary();
+        for (String summaryId : summaryIds) {
+            InMemorySummaryEntity entity = InMemorySummaryUtility.get(summaryId);
+            if (getCategorySummaryName().equals(entity.getName())) {
+                Map<String, Object> map = new HashMap<>();
+                map.putAll(entity.getDimensions());
+                map.putAll(entity.getMeasures());
+                calculationSummary.getCategoryWiseSummary().add(map);
+            } else if (getHealthRiskSummaryName().equals(entity.getName())) {
+                Map<String, Object> map = new HashMap<>();
+                map.putAll(entity.getDimensions());
+                map.putAll(entity.getMeasures());
+                calculationSummary.getHealthRiskWiseSummary().add(map);
+            } else if (getCategoryHealthRiskSummaryName().equals(entity.getName())) {
+                Map<String, Object> map = new HashMap<>();
+                map.putAll(entity.getDimensions());
+                map.putAll(entity.getMeasures());
+                calculationSummary.getCategoryHealthRiskWiseSummary().add(map);
+            }
+        }
+        Gson gson = new Gson();
+        Files.write(Paths.get(summaryPath), gson.toJson(calculationSummary).getBytes(StandardCharsets.UTF_8));
+    }
+
+    private void addSummary(BmiOutput bmiOutput) {
+        {
+            InMemorySummaryEntity entity = new InMemorySummaryEntity();
+            entity.setName(getCategorySummaryName());
+            entity.setDimensionValue("category", getUnknownIfNull(bmiOutput.getCategory()));
+            entity.setMeasureValue("count", 1d);
+            InMemorySummaryUtility.add(entity);
+            summaryIds.add(entity.getId());
+        }
+        {
+            InMemorySummaryEntity entity = new InMemorySummaryEntity();
+            entity.setName(getHealthRiskSummaryName());
+            entity.setDimensionValue("healthRisk", getUnknownIfNull(bmiOutput.getHealthRisk()));
+            entity.setMeasureValue("count", 1d);
+            InMemorySummaryUtility.add(entity);
+            summaryIds.add(entity.getId());
+        }
+        {
+            InMemorySummaryEntity entity = new InMemorySummaryEntity();
+            entity.setName(getCategoryHealthRiskSummaryName());
+            entity.setDimensionValue("category", getUnknownIfNull(bmiOutput.getCategory()));
+            entity.setDimensionValue("healthRisk", getUnknownIfNull(bmiOutput.getHealthRisk()));
+            entity.setMeasureValue("count", 1d);
+            InMemorySummaryUtility.add(entity);
+            summaryIds.add(entity.getId());
+        }
+    }
+
+    private String getCategorySummaryName() {
+        return jobId + "-" + "CategoryWiseSummary";
+    }
+
+    private String getHealthRiskSummaryName() {
+        return jobId + "-" + "HealthRiskWiseSummary";
+    }
+
+    private String getCategoryHealthRiskSummaryName() {
+        return jobId + "-" + "CategoryHealthRiskWiseSummary";
+    }
+
+    private String getUnknownIfNull(String v) {
+        return v == null || v.isEmpty() ? "unknown" : v;
     }
 
     private void writeOutput(BmiOutput bmiOutput, JsonWriter writer) throws IOException {
