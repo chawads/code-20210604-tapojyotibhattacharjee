@@ -1,9 +1,8 @@
 package com.btapo.interview.screening.bmi;
 
-import com.btapo.interview.screening.bmi.service.ApplicationService;
 import org.apache.commons.io.FileUtils;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -20,12 +19,10 @@ import static com.btapo.interview.screening.bmi.utils.CompressionUtility.decompr
 
 @SpringBootTest
 @ActiveProfiles("test")
-public class UtilsTest {
-
-    @Autowired
-    private ApplicationService applicationService;
+public class CompressionUtilTest {
 
     @Test
+    @DisplayName("Compression and decompression should match the same number of files and content")
     public void verifyZipSuccessful() throws IOException {
         Path dir = Files.createTempDirectory("test-dir");
         String zipDirName = dir + ".zip";
