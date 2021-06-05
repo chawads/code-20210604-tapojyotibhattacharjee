@@ -16,7 +16,7 @@ public class BmiJobEntity {
     @Id
     private String id;
     private String inputFileName;
-    private Boolean completed;
+    private Boolean completed = Boolean.FALSE;
     private Boolean successful;
     @Temporal(TemporalType.TIMESTAMP)
     @CreationTimestamp

@@ -1,5 +1,6 @@
 package com.btapo.interview.screening.bmi.utils;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 
 import java.io.*;
@@ -9,6 +10,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+@Slf4j
 public class CompressionUtility {
 
     public static void compressZipFile(String sourceDir, String outputFile) throws IOException {

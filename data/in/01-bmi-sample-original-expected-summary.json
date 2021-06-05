@@ -1,0 +1,47 @@
+{
+  "categoryWiseSummary": [
+    {
+      "category": "Moderately obese",
+      "count": 3
+    },
+    {
+      "category": "Normal weight",
+      "count": 2
+    },
+    {
+      "category": "Overweight",
+      "count": 1
+    }
+  ],
+  "healthRiskWiseSummary": [
+    {
+      "healthRisk": "Low risk",
+      "count": 2
+    },
+    {
+      "healthRisk": "Enhanced risk",
+      "count": 1
+    },
+    {
+      "healthRisk": "Medium risk",
+      "count": 3
+    }
+  ],
+  "categoryHealthRiskWiseSummary": [
+    {
+      "category": "Normal weight",
+      "healthRisk": "Low risk",
+      "count": 2
+    },
+    {
+      "category": "Moderately obese",
+      "healthRisk": "Medium risk",
+      "count": 3
+    },
+    {
+      "category": "Overweight",
+      "healthRisk": "Enhanced risk",
+      "count": 1
+    }
+  ]
+}

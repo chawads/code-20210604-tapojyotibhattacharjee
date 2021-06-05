@@ -6,6 +6,7 @@ import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -52,6 +53,7 @@ public class BmiCalculationJob implements Runnable {
                 Files.move(Paths.get(summaryFile.getAbsolutePath()), Paths.get(outputDir + File.separator + summaryFile.getName()),
                         StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
                 compressZipFile(outputDir, outputDir + ".zip");
+                FileUtils.deleteDirectory(new File(outputDir));
             }
         } catch (IOException e) {
             log.error("Failed to process for job : {}", jobId, e);
