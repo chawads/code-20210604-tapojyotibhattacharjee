@@ -8,17 +8,15 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.Enumeration;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
+
+import static com.btapo.interview.screening.bmi.utils.CompressionUtility.compressZipFile;
+import static com.btapo.interview.screening.bmi.utils.CompressionUtility.decompressZip;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -43,7 +41,7 @@ public class UtilsTest {
                 StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
         Files.move(file3, Paths.get(dir + File.separator + file3.getFileName()),
                 StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-        applicationService.compressZipFile(dir.toString(), zipDirName);
+        compressZipFile(dir.toString(), zipDirName);
 
         FileUtils.deleteDirectory(dir.toFile());
 
@@ -76,45 +74,5 @@ public class UtilsTest {
 
         FileUtils.deleteQuietly(new File(zipDirName));
         FileUtils.deleteDirectory(dir.toFile());
-    }
-
-    private static void decompressZip(String baseDir, String zipFilePath) throws IOException {
-        InputStream is = null;
-        FileOutputStream fos = null;
-        ZipFile zipFile = null;
-        try {
-            zipFile = new ZipFile(zipFilePath);
-            Enumeration<?> enu = zipFile.entries();
-            while (enu.hasMoreElements()) {
-                ZipEntry zipEntry = (ZipEntry) enu.nextElement();
-                String name = zipEntry.getName();
-                File file = new File(name);
-                if (name.endsWith("/")) {
-                    file.mkdirs();
-                    continue;
-                }
-                File parent = file.getParentFile() == null
-                        ? new File(baseDir) :
-                        new File(baseDir + File.separator + file.getParent());
-                parent.mkdirs();
-                is = zipFile.getInputStream(zipEntry);
-                fos = new FileOutputStream(parent + File.separator + file.getName());
-                byte[] bytes = new byte[1024];
-                int length;
-                while ((length = is.read(bytes)) >= 0) {
-                    fos.write(bytes, 0, length);
-                }
-            }
-        } finally {
-            if (is != null) {
-                is.close();
-            }
-            if (fos != null) {
-                fos.close();
-            }
-            if (zipFile != null) {
-                zipFile.close();
-            }
-        }
     }
 }

@@ -11,6 +11,8 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.text.DecimalFormat;
 
+import static com.btapo.interview.screening.bmi.utils.CompressionUtility.compressZipFile;
+
 @Slf4j
 public class BmiCalculationJob implements Runnable {
 
@@ -41,7 +43,7 @@ public class BmiCalculationJob implements Runnable {
                         StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
 //                Files.move(Paths.get(summaryFile.getAbsolutePath()), Paths.get(outputDir + File.separator + summaryFile.getName()),
 //                        StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-                service.compressZipFile(outputDir, outputDir + ".zip");
+                compressZipFile(outputDir, outputDir + ".zip");
             }
         } catch (IOException e) {
             log.error("Failed to process for job : {}", jobId, e);
@@ -89,6 +91,8 @@ public class BmiCalculationJob implements Runnable {
                 writer.beginObject();
                 writeOutput(bmiOutput, writer);
                 writer.endObject();
+
+
 
                 if (noOfRecordsProcessed % updateStatusEveryXRecords == 0) {
                     service.updateJobStatus(jobId, noOfRecordsProcessed, noOfRecordsWithError, false, true, null);

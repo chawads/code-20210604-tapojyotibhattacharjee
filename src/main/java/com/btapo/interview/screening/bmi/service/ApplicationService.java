@@ -21,6 +21,4 @@ public interface ApplicationService {
     BmiConfig getBmiConfig(Double bmi);
 
     BmiJobEntity uploadFile(MultipartFile file) throws IOException;
-
-    void compressZipFile(String sourceDir, String outputFile) throws IOException;
 }

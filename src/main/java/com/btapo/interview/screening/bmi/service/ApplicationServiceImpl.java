@@ -7,7 +7,6 @@ import com.btapo.interview.screening.bmi.repository.BmiJobRepository;
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -17,8 +16,6 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 @Service
 @Slf4j
@@ -74,21 +71,6 @@ public class ApplicationServiceImpl implements ApplicationService {
             }
         } catch (IOException e) {
             throw new UnexpectedException("File IO error, can not upload");
-        }
-    }
-
-    private static void compressDirectoryToZipFile(String rootDir, String sourceDir, ZipOutputStream out) throws IOException {
-        for (File file : Objects.requireNonNull(new File(sourceDir).listFiles())) {
-            if (file.isDirectory()) {
-                compressDirectoryToZipFile(rootDir, sourceDir + File.separator + file.getName(), out);
-            } else {
-                ZipEntry entry = new ZipEntry(sourceDir.replace(rootDir, "") + file.getName());
-                out.putNextEntry(entry);
-
-                FileInputStream in = new FileInputStream(sourceDir + File.separator + file.getName());
-                IOUtils.copy(in, out);
-                IOUtils.closeQuietly(in);
-            }
         }
     }
 
@@ -197,12 +179,5 @@ public class ApplicationServiceImpl implements ApplicationService {
         } catch (Exception e) {
             return null;
         }
-    }
-
-    @Override
-    public void compressZipFile(String sourceDir, String outputFile) throws IOException {
-        ZipOutputStream zipFile = new ZipOutputStream(new FileOutputStream(outputFile));
-        compressDirectoryToZipFile(sourceDir, sourceDir, zipFile);
-        IOUtils.closeQuietly(zipFile);
     }
 }
