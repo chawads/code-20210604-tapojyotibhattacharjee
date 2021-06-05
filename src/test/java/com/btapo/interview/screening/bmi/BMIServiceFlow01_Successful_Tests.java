@@ -10,12 +10,15 @@ import com.google.gson.stream.JsonReader;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.aspectj.lang.annotation.Before;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.event.annotation.AfterTestClass;
 import org.springframework.test.context.event.annotation.BeforeTestClass;
+import org.springframework.test.context.event.annotation.BeforeTestMethod;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.Assert;
 
 import java.io.File;
@@ -38,7 +41,7 @@ import static org.awaitility.Awaitility.await;
 @ActiveProfiles("test")
 @Slf4j
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class BMIServiceFlowTests02_Partial {
+public class BMIServiceFlow01_Successful_Tests {
 
     private final String inFilePath;
     private final String expectedOutFilePath;
@@ -49,17 +52,17 @@ public class BMIServiceFlowTests02_Partial {
     @Autowired
     private ApplicationService applicationService;
 
-    public BMIServiceFlowTests02_Partial() {
-        inFilePath = System.getProperty("user.dir") + File.separator + "data" + File.separator + "in" + File.separator + "02-bmi-sample-with-input-error.json";
-        expectedOutFilePath = System.getProperty("user.dir") + File.separator + "data" + File.separator + "in" + File.separator + "02-bmi-sample-with-input-error-expected-out.json";
-        expectedSummaryFilePath = System.getProperty("user.dir") + File.separator + "data" + File.separator + "in" + File.separator + "02-bmi-sample-with-input-error-expected-summary.json";
+    public BMIServiceFlow01_Successful_Tests() {
+        inFilePath = System.getProperty("user.dir") + File.separator + "data" + File.separator + "in" + File.separator + "01-bmi-sample-original.json";
+        expectedOutFilePath = System.getProperty("user.dir") + File.separator + "data" + File.separator + "in" + File.separator + "01-bmi-sample-original-expected-out.json";
+        expectedSummaryFilePath = System.getProperty("user.dir") + File.separator + "data" + File.separator + "in" + File.separator + "01-bmi-sample-original-expected-summary.json";
     }
 
     @Test
     @BeforeTestClass
-    @DisplayName("BMI test for init for original sample prefixed '02'")
+    @DisplayName("BMI test for init for original sample prefixed '01'")
     @Order(1)
-    public void sample_02_init() {
+    public void sample_01_init() {
         entity = applicationService.linkFile(inFilePath);
         assert entity != null;
         // keep checking till processing completed
@@ -71,26 +74,26 @@ public class BMIServiceFlowTests02_Partial {
     }
 
     @Test
-    @DisplayName("BMI test for cleanup for original sample prefixed '02'")
+    @DisplayName("BMI test for cleanup for original sample prefixed '01'")
     @AfterTestClass
-    public void sample_02_cleanup() throws IOException {
+    public void sample_01_cleanup() throws IOException {
         // cleanup
         FileUtils.deleteDirectory(decompressedDir.get().toFile());
         FileUtils.delete(new File(decompressedDir.get() + ".zip"));
     }
 
     @Test
-    @DisplayName("BMI test for processing successful for original sample prefixed '02'")
+    @DisplayName("BMI test for processing successful for original sample prefixed '01'")
     @Order(2)
-    public void sample_02_processing_success() {
+    public void sample_01_processing_success() {
         // make sure the job is successful
         Assert.isTrue(entity.getSuccessful(), "Processing failed");
     }
 
     @Test
-    @DisplayName("BMI test for file count generated for original sample prefixed '02'")
+    @DisplayName("BMI test for file count generated for original sample prefixed '01'")
     @Order(3)
-    public void sample_02_numberOfFilesGenerated_success() throws IOException {
+    public void sample_01_numberOfFilesGenerated_success() throws IOException {
         // get the artifacts generated and unzip
         await().until(() -> {
             try {
@@ -112,9 +115,9 @@ public class BMIServiceFlowTests02_Partial {
     }
 
     @Test
-    @DisplayName("BMI test for 'out' file validation for original sample prefixed '02'")
+    @DisplayName("BMI test for 'out' file validation for original sample prefixed '01'")
     @Order(4)
-    public void sample_02_outFileValidation_success() throws IOException {
+    public void sample_01_outFileValidation_success() throws IOException {
         Path generatedOutFilePath = Files.list(decompressedDir.get())
                 .filter(path -> path.getFileName().toFile().getName().startsWith("out"))
                 .collect(Collectors.toList()).get(0);
@@ -152,13 +155,9 @@ public class BMIServiceFlowTests02_Partial {
                 assert entry.getValue().getGender().equals(expectedMap.get(entry.getKey()).getGender());
                 assert entry.getValue().getWeightKg().equals(expectedMap.get(entry.getKey()).getWeightKg());
                 assert entry.getValue().getHeightCm().equals(expectedMap.get(entry.getKey()).getHeightCm());
-                if (entry.getValue().getBMI() == null) {
-                    assert expectedMap.get(entry.getKey()).getBMI() == null;
-                } else {
-                    assert entry.getValue().getBMI().equals(expectedMap.get(entry.getKey()).getBMI());
-                    assert entry.getValue().getCategory().equals(expectedMap.get(entry.getKey()).getCategory());
-                    assert entry.getValue().getHealthRisk().equals(expectedMap.get(entry.getKey()).getHealthRisk());
-                }
+                assert entry.getValue().getBMI().equals(expectedMap.get(entry.getKey()).getBMI());
+                assert entry.getValue().getCategory().equals(expectedMap.get(entry.getKey()).getCategory());
+                assert entry.getValue().getHealthRisk().equals(expectedMap.get(entry.getKey()).getHealthRisk());
             }
         }
     }
@@ -169,9 +168,9 @@ public class BMIServiceFlowTests02_Partial {
     }
 
     @Test
-    @DisplayName("BMI test for 'summary' file validation for original sample prefixed '02'")
+    @DisplayName("BMI test for 'summary' file validation for original sample prefixed '01'")
     @Order(5)
-    public void sample_02_summaryFileValidation_success() throws IOException {
+    public void sample_01_summaryFileValidation_success() throws IOException {
         Path generatedSummaryFilePath = Files.list(decompressedDir.get())
                 .filter(path -> path.getFileName().toFile().getName().startsWith("summary"))
                 .collect(Collectors.toList()).get(0);

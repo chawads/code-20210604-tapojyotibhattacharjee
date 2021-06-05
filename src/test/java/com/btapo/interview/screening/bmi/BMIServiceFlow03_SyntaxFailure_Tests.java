@@ -38,7 +38,7 @@ import static org.awaitility.Awaitility.await;
 @ActiveProfiles("test")
 @Slf4j
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class BMIServiceFlowTests03_SyntaxFailure {
+public class BMIServiceFlow03_SyntaxFailure_Tests {
 
     private final String inFilePath;
     private static BmiJobEntity entity;
@@ -46,7 +46,7 @@ public class BMIServiceFlowTests03_SyntaxFailure {
     @Autowired
     private ApplicationService applicationService;
 
-    public BMIServiceFlowTests03_SyntaxFailure() {
+    public BMIServiceFlow03_SyntaxFailure_Tests() {
         inFilePath = System.getProperty("user.dir") + File.separator + "data" + File.separator + "in" + File.separator + "03-bmi-sample-invalid-syntax-file.json";
     }
 
