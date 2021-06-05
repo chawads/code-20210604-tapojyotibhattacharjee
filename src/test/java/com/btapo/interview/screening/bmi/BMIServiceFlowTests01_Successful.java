@@ -10,10 +10,16 @@ import com.google.gson.stream.JsonReader;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.aspectj.lang.annotation.Before;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.event.annotation.AfterTestClass;
+import org.springframework.test.context.event.annotation.BeforeTestClass;
+import org.springframework.test.context.event.annotation.BeforeTestMethod;
+import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.util.Assert;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,47 +39,61 @@ import static org.awaitility.Awaitility.await;
 
 @SpringBootTest
 @ActiveProfiles("test")
-/*
- * This is for end to end service flow test with maximum coverage for a successful scenario
- * */
 @Slf4j
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class BMIServiceFlowTests01 {
+public class BMIServiceFlowTests01_Successful {
 
     private final String inFilePath;
     private final String expectedOutFilePath;
     private final String expectedSummaryFilePath;
-    private AtomicReference<Path> decompressedDir = new AtomicReference<>();
+    private static AtomicReference<Path> decompressedDir = new AtomicReference<>();
+    private static BmiJobEntity entity;
 
     @Autowired
     private ApplicationService applicationService;
 
-    public BMIServiceFlowTests01() {
+    public BMIServiceFlowTests01_Successful() {
         inFilePath = System.getProperty("user.dir") + File.separator + "data" + File.separator + "in" + File.separator + "01-bmi-sample-original.json";
         expectedOutFilePath = System.getProperty("user.dir") + File.separator + "data" + File.separator + "in" + File.separator + "01-bmi-sample-original-expected-out.json";
         expectedSummaryFilePath = System.getProperty("user.dir") + File.separator + "data" + File.separator + "in" + File.separator + "01-bmi-sample-original-expected-summary.json";
     }
 
     @Test
-    @DisplayName("BMI test for processing successful for original sample prefixed '01'")
+    @BeforeTestClass
+    @DisplayName("BMI test for init for original sample prefixed '01'")
     @Order(1)
-    public void sample_01_processing_success() throws IOException {
-        BmiJobEntity entity = applicationService.linkFile(inFilePath);
+    public void sample_01_init() {
+        entity = applicationService.linkFile(inFilePath);
         assert entity != null;
         // keep checking till processing completed
         BmiJobEntity finalEntity = entity;
         await().until(() -> applicationService.getJobStatus(finalEntity.getId()).getCompleted());
 
         entity = applicationService.getJobStatus(entity.getId());
-        // make sure the job is successful
-        assert entity.getSuccessful();
-        sample_01_numberOfFilesGenerated_success(entity);
+        decompressedDir.set(Paths.get(entity.getReportArtifactLocation().substring(0, entity.getReportArtifactLocation().indexOf(".zip"))));
+    }
+
+    @Test
+    @DisplayName("BMI test for cleanup for original sample prefixed '01'")
+    @AfterTestClass
+    public void sample_01_cleanup() throws IOException {
         // cleanup
         FileUtils.deleteDirectory(decompressedDir.get().toFile());
         FileUtils.delete(new File(decompressedDir.get() + ".zip"));
     }
 
-    public void sample_01_numberOfFilesGenerated_success(BmiJobEntity entity) throws IOException {
+    @Test
+    @DisplayName("BMI test for processing successful for original sample prefixed '01'")
+    @Order(2)
+    public void sample_01_processing_success() {
+        // make sure the job is successful
+        Assert.isTrue(entity.getSuccessful(), "Processing failed");
+    }
+
+    @Test
+    @DisplayName("BMI test for file count generated for original sample prefixed '01'")
+    @Order(3)
+    public void sample_01_numberOfFilesGenerated_success() throws IOException {
         // get the artifacts generated and unzip
         await().until(() -> {
             try {
@@ -92,17 +112,15 @@ public class BMIServiceFlowTests01 {
         assert Files.list(decompressedDir.get())
                 .map(path -> path.getFileName().toFile().getName())
                 .filter(f -> f.startsWith("summary")).count() == 1;
+    }
+
+    @Test
+    @DisplayName("BMI test for 'out' file validation for original sample prefixed '01'")
+    @Order(4)
+    public void sample_01_outFileValidation_success() throws IOException {
         Path generatedOutFilePath = Files.list(decompressedDir.get())
                 .filter(path -> path.getFileName().toFile().getName().startsWith("out"))
                 .collect(Collectors.toList()).get(0);
-        Path generatedSummaryFilePath = Files.list(decompressedDir.get())
-                .filter(path -> path.getFileName().toFile().getName().startsWith("summary"))
-                .collect(Collectors.toList()).get(0);
-        sample_01_outFileValidation_success(generatedOutFilePath);
-        sample_01_summaryFileValidation_success(generatedSummaryFilePath);
-    }
-
-    public void sample_01_outFileValidation_success(Path generatedOutFilePath) throws IOException {
 
         Map<String, BmiOutput> generatedMap = new HashMap<>();
         Map<String, BmiOutput> expectedMap = new HashMap<>();
@@ -149,7 +167,13 @@ public class BMIServiceFlowTests01 {
                 + "-" + df.format(expectedOutput.getHeightCm());
     }
 
-    public void sample_01_summaryFileValidation_success(Path generatedSummaryFilePath) throws IOException {
+    @Test
+    @DisplayName("BMI test for 'summary' file validation for original sample prefixed '01'")
+    @Order(5)
+    public void sample_01_summaryFileValidation_success() throws IOException {
+        Path generatedSummaryFilePath = Files.list(decompressedDir.get())
+                .filter(path -> path.getFileName().toFile().getName().startsWith("summary"))
+                .collect(Collectors.toList()).get(0);
 
         Map<String, Double> expectedMap = new HashMap<>();
         Map<String, Double> generatedMap = new HashMap<>();
