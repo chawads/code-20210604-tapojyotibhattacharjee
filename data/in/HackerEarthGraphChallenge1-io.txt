@@ -1,0 +1,16 @@
+========
+university, college, class, student
+university = 6000 student
+college = 600 student
+class = 50 student
+--
+1university = 10college = 120class  = 6000student
+=========
+housingcomplex,sector,block,tower,apartment
+housingcomplex = 8 sector
+sector = 10 block
+block = 3 tower
+tower = 300 apartment
+--
+1housingcomplex = 8sector = 80block = 240tower = 72000apartment
+=========

@@ -24,7 +24,7 @@ public class HackerEarthGraphChallenge1 {
         GraphDS.Graph graph = new GraphDS.Graph(edges);
         graph.printGraph();
         StringBuilder sb = new StringBuilder();
-        GraphDS.DistanceAndPaths distanceAndPaths = graph.calculateAllShortestPaths();
+        GraphDS.DistanceAndPaths distanceAndPaths = graph.calculateAllShortestPaths2();
         for (int i = 0; i < nodeNameMap.size() - 1; i++) {
             if (i == 0) {
                 sb.append("1").append(nodeNameMap.get(i));
